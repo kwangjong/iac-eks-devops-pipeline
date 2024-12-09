@@ -28,6 +28,7 @@ resource "aws_security_group" "gitlab" {
 resource "aws_instance" "gitlab" {
   ami           = "ami-0dc44556af6f78a7b"
   instance_type = "c5.xlarge"
+  private_ip = "10.10.143.147"
 
   key_name = "test-server"
 
@@ -69,6 +70,7 @@ resource "aws_security_group" "gitlab_runner" {
 resource "aws_instance" "gitlab_runner" {
   ami           = "ami-0dc44556af6f78a7b"
   instance_type = "t2.small"
+  private_ip = "10.10.143.148"
 
   key_name = "test-server"
 

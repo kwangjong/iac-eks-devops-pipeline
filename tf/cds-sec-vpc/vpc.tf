@@ -81,3 +81,14 @@ resource "aws_ec2_transit_gateway_route" "igw" {
   transit_gateway_attachment_id  = aws_ec2_transit_gateway_vpc_attachment.vpc_attachments.id
   transit_gateway_route_table_id = aws_ec2_transit_gateway.tgw.association_default_route_table_id
 }
+
+resource "aws_lb" "nlb" {
+  name               = "sec-nlb-pub"
+  internal           = false
+  load_balancer_type = "network"
+
+  subnets = [
+    aws_subnet.subnets["sec-sbn-comm-pub-a"].id, 
+    aws_subnet.subnets["sec-sbn-comm-pub-c"].id
+  ]
+}

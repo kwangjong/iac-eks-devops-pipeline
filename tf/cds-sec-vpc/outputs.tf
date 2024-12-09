@@ -6,14 +6,18 @@ output "tgw_id" {
   value = aws_ec2_transit_gateway.tgw.id
 }
 
+output "nlb_arn" {
+  value = aws_lb.nlb.arn
+}
+
+output "nlb_dns_name" {
+  value = aws_lb.nlb.dns_name
+}
+
 output "bastion_public_ip" {
   value = aws_instance.bastion.public_ip
 }
 
 output "bastion_instance_id" {
   value = aws_instance.bastion.id
-}
-
-output "nlb_dns_name" {
-  value = aws_lb.nlb.dns_name
 }
