@@ -29,4 +29,7 @@ data "terraform_remote_state" "cds_sec_vpc" {
 
 locals {
   tgw_id = data.terraform_remote_state.cds_sec_vpc.outputs.tgw_id
+  sec_vpc_id = data.terraform_remote_state.cds_sec_vpc.outputs.vpc_id
+  sec_vpc_nlb_arn = data.terraform_remote_state.cds_sec_vpc.outputs.nlb_arn
+  sec_vpc_nlb_dns_name = data.terraform_remote_state.cds_sec_vpc.outputs.nlb_dns_name
 }

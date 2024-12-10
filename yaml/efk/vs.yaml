@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: vs-kibana
+  namespace: istio-system
+spec:
+  gateways:
+  - gw-istio
+  hosts:
+  - '*'
+  http:
+  - match:
+    - uri:
+        prefix: /kibana/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+       host: quickstart-kb-http.default.svc.cluster.local

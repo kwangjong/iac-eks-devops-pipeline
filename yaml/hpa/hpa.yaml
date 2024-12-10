@@ -1,0 +1,14 @@
+apiVersion: autoscaling/v1
+kind: HorizontalPodAutoscaler
+metadata:
+  name: hpa-hello
+  namespace: ns-sample
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: hello
+  minReplicas: 2
+  maxReplicas: 2
+  targetCPUUtilizationPercentage: 30
+

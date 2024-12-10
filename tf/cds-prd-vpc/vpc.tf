@@ -19,20 +19,20 @@ resource "aws_subnet" "subnets" {
     "cds-prd-sbn-comm-pri-a" = {
       cidr_block        = "10.10.129.0/27"
       availability_zone = "ap-northeast-2a"
+      eks_subnet        = true
     }
     "cds-prd-sbn-comm-pri-c" = {
       cidr_block        = "10.10.129.32/27"
       availability_zone = "ap-northeast-2c"
+      eks_subnet        = true
     }
     "cds-prd-sbn-ap-pri-a" = {
       cidr_block        = "10.10.130.0/23"
       availability_zone = "ap-northeast-2a"
-      eks_subnet        = true
     }
     "cds-prd-sbn-ap-pri-c" = {
       cidr_block        = "10.10.132.0/23"
       availability_zone = "ap-northeast-2c"
-      eks_subnet        = true
     }
     "cds-prd-sbn-db-pri-a" = {
       cidr_block        = "10.10.129.64/27"

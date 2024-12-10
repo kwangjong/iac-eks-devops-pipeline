@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-blue
+  namespace: ns-sample
+  labels:
+    app: hellobg
+    bg: blue
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hellobg
+      bg: blue
+  template:
+    metadata:
+      labels:
+        app: hellobg
+        bg: blue
+    spec:
+      containers:
+      - name: hellobg
+        image: paulbouwer/hello-kubernetes:1.10
+        env:
+        - name: MESSAGE
+          value: "This is the BLUE version of the application"
+        ports:
+        - containerPort: 8080

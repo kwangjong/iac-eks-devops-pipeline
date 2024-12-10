@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hello-green
+  namespace: ns-sample
+  labels:
+    app: hellobg
+    bg: green
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hellobg
+      bg: green
+  template:
+    metadata:
+      labels:
+        app: hellobg
+        bg: green
+    spec:
+      containers:
+      - name: hellobg
+        image: paulbouwer/hello-kubernetes:1.10
+        env:
+        - name: MESSAGE
+          value: "This is the GREEN version of the application"
+        ports:
+        - containerPort: 8080

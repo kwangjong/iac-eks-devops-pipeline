@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: svc-bg
+  namespace: ns-sample
+spec:
+  selector:
+    app: hellobg
+  ports:
+  - protocol: TCP
+    port: 8080
+    targetPort: 8080
+---
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: dr-bg
+  namespace: ns-sample
+spec:
+  host: svc-bg
+  subsets:
+  - name: blue
+    labels:
+      bg: blue
+  - name: green
+    labels:
+      bg: green
+---
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: vs-bg
+  namespace: ns-sample
+spec:
+  gateways:
+  - gateway
+  hosts:
+  - '*'
+  http:
+  - match:
+    - uri:
+        prefix: /blue/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: svc-bg
+        subset: blue
+  - match:
+    - uri:
+        prefix: /green/
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: svc-bg
+        subset: green
+
+

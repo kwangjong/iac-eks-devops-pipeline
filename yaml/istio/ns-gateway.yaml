@@ -1,0 +1,40 @@
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: gateway
+  namespace: ns-sample
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - hosts:
+    - "sec-nlb-pub-027c75fd9b70533c.elb.ap-northeast-2.amazonaws.com"
+    - "a8658a0357c2a4ff08a49d6ec6597b06-3984ae3e455ecb86.elb.ap-northeast-2.amazonaws.com"
+    port:
+      name: http
+      number: 80
+      protocol: HTTP
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: vs
+  namespace: ns-sample
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - gateway
+  http:
+  - match:
+    - uri:
+        prefix: /hello
+    rewrite:
+      uri: /
+    route:
+    - destination:
+        host: svc-hello
+    timeout: 30s
+    retries:
+      attempts: 1
+      retryOn: 'retriable-status-codes,503'

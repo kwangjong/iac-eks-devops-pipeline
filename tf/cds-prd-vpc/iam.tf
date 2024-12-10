@@ -58,3 +58,23 @@ resource "aws_iam_role_policy_attachment" "eks_worker_node_instance_policy" {
   role       = aws_iam_role.eks_worker_role.name
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
 }
+
+resource "aws_iam_role_policy_attachment" "eks_worker_elb_policy" {
+  role       = aws_iam_role.eks_worker_role.name
+  policy_arn = "arn:aws:iam::aws:policy/ElasticLoadBalancingFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_iam_policy" {
+  role       = aws_iam_role.eks_worker_role.name
+  policy_arn = "arn:aws:iam::aws:policy/IAMFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_vpc_policy" {
+  role       = aws_iam_role.eks_worker_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonVPCFullAccess"
+}
+
+resource "aws_iam_role_policy_attachment" "eks_worker_ec2_policy" {
+  role       = aws_iam_role.eks_worker_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonEC2FullAccess"
+}

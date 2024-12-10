@@ -22,12 +22,12 @@ resource "aws_eks_node_group" "eks_node_group" {
     aws_subnet.subnets["cds-prd-sbn-ap-pri-a"].id,
     aws_subnet.subnets["cds-prd-sbn-ap-pri-c"].id
   ]
-  instance_types = ["t3.small"]
+  instance_types = ["t3.medium"]
 
   scaling_config {
     desired_size = 2
-    max_size     = 2
-    min_size     = 2
+    max_size     = 4
+    min_size     = 0
   }
 
   tags = {
