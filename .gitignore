@@ -1,0 +1,3 @@
+tf/cds-devops-vpc/.terraform/
+tf/cds-prd-vpc/.terraform/
+tf/cds-sec-vpc/.terraform/
