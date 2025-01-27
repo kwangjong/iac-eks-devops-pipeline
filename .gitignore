@@ -1,3 +1,4 @@
-tf/cds-devops-vpc/.terraform/
-tf/cds-prd-vpc/.terraform/
-tf/cds-sec-vpc/.terraform/
+tf/mgmt/.terraform/
+tf/dev/.terraform/
+tf/prd/.terraform/
+tf/stg/.terraform/
