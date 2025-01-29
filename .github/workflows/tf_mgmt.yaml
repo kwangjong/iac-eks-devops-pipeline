@@ -23,11 +23,12 @@ jobs:
 
       - name: Terraform Fmt
         run: terraform fmt -recursive tf/mgmt
-        
+
       - name: Commit and Push Format Changes
         run: |
           if [ -n "$(git status --porcelain)" ]; then
-            # Some files changed (fmt rewrote them)
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
             git add .
             git commit -m "Auto-format: fix Terraform style [ci skip]"
             git push
