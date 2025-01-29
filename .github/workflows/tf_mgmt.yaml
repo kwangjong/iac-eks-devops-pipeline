@@ -41,6 +41,9 @@ jobs:
             echo "No formatting changes to commit."
           fi
 
+      - name: Terraform Init
+        run: terraform init /tf/mgmt
+
       - name: Terraform Validate
         run: terraform validate tf/mgmt
 
