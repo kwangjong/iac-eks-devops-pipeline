@@ -2,8 +2,8 @@ module "mgmt_vpc" {
   source = "../modules/vpc"
 
   vpc = {
-    name        = "mgmt-vpc"
-    cidr_block  = "10.0.0.0/16"
+    name       = "mgmt-vpc"
+    cidr_block = "10.0.0.0/16"
   }
 
   public_subnets = {
