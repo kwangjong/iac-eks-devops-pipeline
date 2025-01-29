@@ -13,10 +13,15 @@ jobs:
   plan:
     name: Terraform Plan
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     
     steps:
       - name: Check out code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          persist-credentials: true
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
