@@ -3,11 +3,11 @@ name: Terraform Pipeline
 on:
   push:
     paths:
-      - 'tf/**'
+      - 'tf/mgmt/**'
   
   pull_request:
     paths:
-      - 'tf/**'
+      - 'tf/mgmt/**'
 
 jobs:
   plan:
@@ -22,19 +22,19 @@ jobs:
         uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Fmt Check
-        run: terraform fmt -check tf
+        run: terraform fmt -check tf/mgmt
 
       - name: Terraform Validate
-        run: terraform validate tf
+        run: terraform validate tf/mgmt
 
       - name: TFSec Scan
         uses: aquasecurity/tfsec-action@v1.0.3
         with:
           tfsec_version: latest
-          args: --no-color tf
+          args: --no-color tf/mgmt
 
       - name: Terraform Plan
-        run: terraform plan -no-color -input=false tf
+        run: terraform plan -no-color -input=false tf/mgmt
 
   apply:
     name: Terraform Apply
@@ -54,11 +54,11 @@ jobs:
         uses: hashicorp/setup-terraform@v2
 
       - name: Terraform Init
-        run: terraform init tf
+        run: terraform init tf/mgmt
 
       - name: Terraform Plan
-        run: terraform plan -no-color -input=false tf
+        run: terraform plan -no-color -input=false tf/mgmt
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve tf
+        run: terraform apply -auto-approve tf/mgmt
 
