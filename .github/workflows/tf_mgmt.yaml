@@ -21,8 +21,19 @@ jobs:
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v2
 
-      - name: Terraform Fmt Check
-        run: terraform fmt -check tf/mgmt
+      - name: Terraform Fmt
+        run: terraform fmt -recursive tf/mgmt
+        
+      - name: Commit and Push Format Changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            # Some files changed (fmt rewrote them)
+            git add .
+            git commit -m "Auto-format: fix Terraform style [ci skip]"
+            git push
+          else
+            echo "No formatting changes to commit."
+          fi
 
       - name: Terraform Validate
         run: terraform validate tf/mgmt
