@@ -14,10 +14,7 @@ jobs:
     name: Check Changed Paths
     runs-on: ubuntu-latest
     outputs:
-      mgmt: ${{ steps.filter.outputs.mgmt }}
-      dev: ${{ steps.filter.outputs.dev }}
-      stg: ${{ steps.filter.outputs.stg }}
-      prd: ${{ steps.filter.outputs.prd }}
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
 
     steps:
       - name: Check out code
@@ -36,16 +33,23 @@ jobs:
               - 'tf/stg/**'
             prd:
               - 'tf/prd/**'
-  
+
+      - name: Generate Matrix
+        id: set-matrix
+        run: |
+          MATRIX='{"env_name": []}'
+          if [[ "${{ steps.filter.outputs.mgmt }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["mgmt"]'); fi
+          if [[ "${{ steps.filter.outputs.dev }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["dev"]'); fi
+          if [[ "${{ steps.filter.outputs.stg }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["stg"]'); fi
+          if [[ "${{ steps.filter.outputs.prd }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["prd"]'); fi
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
   tf-init:
     name: Terraform Init
     needs: check-changes
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        env_name: [mgmt, dev, stg, prd]
+      matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
     
-    if: ${{ fromJson(needs.check-changes.outputs)[matrix.env_name] == 'true' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -68,10 +72,8 @@ jobs:
     permissions:
       contents: write
     strategy:
-      matrix:
-        env_name: [mgmt, dev, stg, prd]
+      matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
     
-    if: ${{ fromJson(needs.check-changes.outputs)[matrix.env_name] == 'true' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -100,10 +102,8 @@ jobs:
     needs: tf-init
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        env_name: [mgmt, dev, stg, prd]
+      matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
     
-    if: ${{ fromJson(needs.check-changes.outputs)[matrix.env_name] == 'true' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -123,10 +123,8 @@ jobs:
     needs: tf-init
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        env_name: [mgmt, dev, stg, prd]
+      matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
     
-    if: ${{ fromJson(needs.check-changes.outputs)[matrix.env_name] == 'true' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
@@ -164,10 +162,8 @@ jobs:
     needs: [terraform-fmt, tfsec-scan, terraform-validate]
     runs-on: ubuntu-latest
     strategy:
-      matrix:
-        env_name: [mgmt, dev, stg, prd]
+      matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
     
-    if: ${{ fromJson(needs.check-changes.outputs)[matrix.env_name] == 'true' }}
     steps:
       - name: Check out code
         uses: actions/checkout@v4
