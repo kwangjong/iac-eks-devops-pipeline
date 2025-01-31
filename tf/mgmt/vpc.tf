@@ -30,7 +30,7 @@ module "mgmt_vpc" {
 
   nat_gateway = {
     "mgmt_public_apne2a_nat" = {
-        public_subnet_name = "mgmt_public_apne2a_subnet"
+      public_subnet_name = "mgmt_public_apne2a_subnet"
     },
     "mgmt_public_apne2c_nat" = {
       public_subnet_name = "mgmt_public_apne2c_subnet"
@@ -45,7 +45,7 @@ module "mgmt_vpc" {
       ]
     }
   }
-    
+
 
   private_route_table = {
     "mgmt_private_apne2a_route_table" = {
