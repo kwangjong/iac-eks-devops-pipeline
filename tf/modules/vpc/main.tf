@@ -1,5 +1,4 @@
 #vpc
-
 #tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
 resource "aws_vpc" "vpc" {
   cidr_block = var.vpc.cidr_block
@@ -83,14 +82,13 @@ resource "aws_route" "public_default_route" {
 }
 
 resource "aws_route_table_association" "public_assoc" {
-  for_each        = merge([
-    for route_table_name, value in var.public_route_table : {
-      for subnet_name in value.public_subnet_name : 
-        "${route_table_name}-${subnet_name}" => {
+  for_each = flatten([
+    for route_table_name, value in var.public_route_table : [
+      for subnet_name in value.public_subnet_name : {
           route_table_id  = aws_route_table.public[route_table_name].id
           subnet_id       = aws_subnet.public_subnet[subnet_name].id
         }
-    }
+    ]
   ])
 
   subnet_id       = each.value.subnet_id
@@ -119,14 +117,14 @@ resource "aws_route" "private_default_route" {
 }
 
 resource "aws_route_table_association" "private_assoc" {
-  for_each        = merge([
-    for route_table_name, value in var.private_route_table : {
+  for_each = flatten([
+    for route_table_name, value in var.private_route_table : [
       for subnet_name in value.private_subnet_name : 
-        "${route_table_name}-${subnet_name}" => {
+        {
           route_table_id  = aws_route_table.private[route_table_name].id
           subnet_id       = aws_subnet.private_subnet[subnet_name].id
         }
-    }
+    ]
   ])
   subnet_id       = each.value.subnet_id
   route_table_id  = each.value.route_table_id
