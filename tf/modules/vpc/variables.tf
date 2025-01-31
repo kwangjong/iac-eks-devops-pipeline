@@ -1,13 +1,14 @@
 variable "vpc" {
   type = object({
-    name        = string
-    cidr_block  = string
+    name            = string
+    cidr_block      = string
+    enable_flow_logs = bool
   })
   
   description   = "Name and CIDR block for the VPC"
 }
 
-variable "public_subnets" {
+variable "public_subnet" {
   type  = map(object({
     cidr_block          = string
     availability_zone   = string
@@ -16,7 +17,7 @@ variable "public_subnets" {
   description = "Map of public subnet name and its CIDR block and AZ"
 }
 
-variable "private_subnets" {
+variable "private_subnet" {
   type = map(object({
     cidr_block          = string
     availability_zone   = string
@@ -25,14 +26,25 @@ variable "private_subnets" {
   description = "Map of private subnet name and its CIDR block and AZ"
 }
 
-variable "enable_internet_gateway" {
-  type          = bool
-  description   = "If true, create a internet gateway in the VPC"
-  default       = true
+variable "nat_gateway" {
+  type          = map(object({
+    public_subnet_name = string
+  }))
+  description   = "Map of NAT gateway name and the public subnet name in which to place the gateway"
 }
 
-variable "enable_nat_gateway" {
-  type          = bool
-  description   = "If true, create a NAT gateway (one per AZ)  public subnets"
-  default       = true
+variable "public_route_table" {
+  type = map(object({
+    public_subnet_name = list(string)
+  }))
+  description = "Map of public route table name and the public subnet names to associate"
+}
+
+variable "private_route_table" {
+  type = map(object({
+    nat_gateway_name    = string
+    private_subnet_name = list(string)
+  }))
+
+  description = "Map of private route table name and the private subnet names to associate"
 }
