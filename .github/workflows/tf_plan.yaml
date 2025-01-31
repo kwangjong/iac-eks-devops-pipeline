@@ -1,0 +1,200 @@
+name: Terraform Plan
+
+on:
+  push:
+    paths:
+      - 'tf/**'
+  
+  pull_request:
+    paths:
+      - 'tf/**'
+
+jobs:
+  check-changes:
+    name: Check Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      mgmt: ${{ steps.filter.outputs.mgmt }}
+      dev: ${{ steps.filter.outputs.dev }}
+      stg: ${{ steps.filter.outputs.stg }}
+      prd: ${{ steps.filter.outputs.prd }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Paths Filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            mgmt:
+              - 'tf/mgmt/**'
+            dev:
+              - 'tf/dev/**'
+            staging:
+              - 'tf/stg/**'
+            prd:
+              - 'tf/prd/**'
+  
+  tf-init:
+    name: Terraform Init
+    needs: check-changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env_name: [mgmt, dev, stg, prd]
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Cache Terraform Modules
+        uses: actions/cache@v4
+        with:
+          path: tf/${{ matrix.env_name }}/.terraform
+          key: terraform-${{ matrix.env_name }}-${{ github.run_id }}
+          restore-keys: terraform-
+      
+      - name: Terraform Init
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform init
+
+  tf-fmt:
+    name: Terraform Fmt
+    needs: tf-init
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix:
+        env_name: [mgmt, dev, stg, prd]
+    
+    if: ${{ needs.check-changes.outputs[matrix.env_name] == 'true' }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Terraform Fmt
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform fmt -recursive
+      
+      - name: Commit and Push Format Changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "Auto-format: fix Terraform style [ci skip]"
+            git push
+          else
+            echo "No formatting changes to commit."
+          fi
+  
+  tfsec-scan:
+    name: TFSec Scan
+    needs: tf-init
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env_name: [mgmt, dev, stg, prd]
+    
+    if: ${{ needs.check-changes.outputs[matrix.env_name] == 'true' }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      
+      - name: TFSec Scan
+        working-directory: tf/${{ matrix.env_name }}
+        uses: aquasecurity/tfsec-action@v1
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: aquasecurity/tfsec-pr-commenter-action@v1
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+  tf-validate:
+    name: Terraform Validate
+    needs: tf-init
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env_name: [mgmt, dev, stg, prd]
+    
+    if: ${{ needs.check-changes.outputs[matrix.env_name] == 'true' }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Restore Terraform Modules
+        uses: actions/cache@v4
+        with:
+          path: tf/${{ matrix.env_name }}/.terraform
+          key: terraform-${{ matrix.env_name }}-${{ github.run_id }}
+          restore-keys: terraform-
+      
+      - name: Terraform Init (Reconfigure)
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform init -reconfigure
+
+      - name: Terraform Validate
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform validate | tee tfvalidate.txt
+
+      - name: Post PR Comment with Terraform Validate Result
+        if: github.event_name == 'pull_request'
+        working-directory: tf/${{ matrix.env_name }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## Terraform Validate Output
+            ```
+            $(head -c 65000 tfvalidate.txt)
+            ```
+          edit-mode: replace
+
+  tf-plan:
+    name: Terraform Plan
+    needs: [terraform-fmt, tfsec-scan, terraform-validate]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        env_name: [mgmt, dev, stg, prd]
+    
+    if: ${{ needs.check-changes.outputs[matrix.env_name] == 'true' }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Restore Terraform Modules
+        uses: actions/cache@v4
+        with:
+          path: tf/${{ matrix.env_name }}/.terraform
+          key: terraform-${{ matrix.env_name }}-${{ github.run_id }}
+          restore-keys: terraform-
+      
+      - name: Terraform Init (Reconfigure)
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform init -reconfigure
+
+      - name: Terraform Plan
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform plan -input=false | tee >(sed 's/\x1b\[[0-9;]*m//g' > tfplan.txt)
+
+      - name: Comment on PR with Output
+        if: github.event_name == 'pull_request'
+        working-directory: tf/${{ matrix.env_name }}
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## Terraform Plan Output
+            ```
+            $(head -c 65000 tfplan.txt)
+            ```
+          edit-mode: replace
