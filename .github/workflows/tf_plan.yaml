@@ -164,14 +164,13 @@ jobs:
 
       - name: Post PR Comment with Terraform Validate Result
         if: github.event_name == 'pull_request'
-        working-directory: tf/${{ matrix.env_name }}
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ## Terraform Validate Output
             ```
-            $(head -c 65000 tfvalidate.txt)
+            $(head -c 65000 tf/${{ matrix.env_name }}/tfvalidate.txt)
             ```
           edit-mode: replace
 
@@ -211,13 +210,12 @@ jobs:
 
       - name: Comment on PR with Output
         if: github.event_name == 'pull_request'
-        working-directory: tf/${{ matrix.env_name }}
         uses: peter-evans/create-or-update-comment@v4
         with:
           issue-number: ${{ github.event.pull_request.number }}
           body: |
             ## Terraform Plan Output
             ```
-            $(head -c 65000 tfplan.txt)
+            $(head -c 65000 tf/${{ matrix.env_name }}/tfplan.txt)
             ```
           edit-mode: replace
