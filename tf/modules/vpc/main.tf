@@ -1,8 +1,9 @@
 #vpc
+
+#tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
 resource "aws_vpc" "vpc" {
   cidr_block = var.vpc.cidr_block
-  
-  # tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
+
   tags = {
     Name = var.vpc.name
   }
