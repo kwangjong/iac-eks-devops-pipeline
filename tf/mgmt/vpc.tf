@@ -49,11 +49,13 @@ module "mgmt_vpc" {
 
   private_route_table = {
     "mgmt_private_apne2a_route_table" = {
+      nat_gateway_name = "mgmt_public_apne2a_nat"
       private_subnet_name = [
         "mgmt_private_apne2a_subnet"
       ]
     },
     "mgmt_private_apne2c_route_table" = {
+      nat_gateway_name = "mgmt_public_apne2c_nat"
       private_subnet_name = [
         "mgmt_private_apne2c_subnet"
       ]
