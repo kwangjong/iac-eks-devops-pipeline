@@ -6,28 +6,57 @@ module "mgmt_vpc" {
     cidr_block = "10.0.0.0/16"
   }
 
-  public_subnets = {
-    "mgmt_public_apne2a" = {
+  public_subnet = {
+    "mgmt_public_apne2a_subnet" = {
       cidr_block        = "10.0.0.0/24"
       availability_zone = "ap-northeast-2a"
     },
-    "mgmt_public_apne2c" = {
+    "mgmt_public_apne2c_subnet" = {
       cidr_block        = "10.0.1.0/24"
       availability_zone = "ap-northeast-2c"
     }
   }
 
-  private_subnets = {
-    "mgmt_private_apne2a" = {
+  private_subnet = {
+    "mgmt_private_apne2a_subnet" = {
       cidr_block        = "10.0.2.0/24"
       availability_zone = "ap-northeast-2a"
     },
-    "mgmt_private_apne2c" = {
+    "mgmt_private_apne2c_subnet" = {
       cidr_block        = "10.0.3.0/24"
       availability_zone = "ap-northeast-2c"
     }
   }
 
-  enable_internet_gateway = true
-  enable_nat_gateway      = true
+  nat_gateway = {
+    "mgmt_public_apne2a_nat" = {
+        public_subnet_name = "mgmt_public_apne2a_subnet"
+    },
+    "mgmt_public_apne2c_nat" = {
+      public_subnet_name = "mgmt_public_apne2c_subnet"
+    }
+  }
+
+  public_route_table = {
+    "mgmt_public_route_table" = {
+      public_subnet_name = [
+        "mgmt_public_apne2a_subnet",
+        "mgmt_public_apne2c_subnet"
+      ]
+    }
+  }
+    
+
+  private_route_table = {
+    "mgmt_private_apne2a_route_table" = {
+      private_subnet_name = [
+        "mgmt_private_apne2a_subnet"
+      ]
+    },
+    "mgmt_private_apne2c_route_table" = {
+      private_subnet_name = [
+        "mgmt_private_apne2c_subnet"
+      ]
+    }
+  }
 }
