@@ -1,7 +1,8 @@
 variable "vpc" {
   type = object({
-    name        = string
-    cidr_block  = string
+    name            = string
+    cidr_block      = string
+    enable_flow_logs = bool
   })
   
   description   = "Name and CIDR block for the VPC"

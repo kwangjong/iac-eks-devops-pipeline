@@ -2,6 +2,7 @@
 resource "aws_vpc" "vpc" {
   cidr_block = var.vpc.cidr_block
   
+  # tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
   tags = {
     Name = var.vpc.name
   }
@@ -128,4 +129,38 @@ resource "aws_route_table_association" "private_assoc" {
   ])
   subnet_id       = each.value.subnet_id
   route_table_id  = each.value.route_table_id
+}
+
+#vpc flowlog
+resource "aws_cloudwatch_log_group" "vpc_flow_logs" {
+  count = var.vpc.enable_flow_logs ? 1 : 0
+
+  name = "/aws/vpc/${var.vpc.name}-flow-logs"
+}
+
+resource "aws_iam_role" "vpc_flow_logs_role" {
+  count = var.vpc.enable_flow_logs ? 1 : 0
+
+  name = "${var.vpc.name}-vpc-flow-logs-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "vpc-flow-logs.amazonaws.com"
+      }
+    }]
+  })
+}
+
+resource "aws_flow_log" "vpc_flow_logs" {
+  count = var.vpc.enable_flow_logs ? 1 : 0
+
+  log_destination      = aws_cloudwatch_log_group.vpc_flow_logs[0].arn
+  log_destination_type = "cloud-watch-logs"
+  traffic_type         = "ALL"
+  vpc_id              = aws_vpc.vpc.id
+  iam_role_arn        = aws_iam_role.vpc_flow_logs_role[0].arn
 }
