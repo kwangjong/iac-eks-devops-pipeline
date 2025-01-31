@@ -43,10 +43,20 @@ jobs:
           if [[ "${{ steps.filter.outputs.stg }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["stg"]'); fi
           if [[ "${{ steps.filter.outputs.prd }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["prd"]'); fi
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+      
+      - name: Fail if No Changes
+        if: |
+          ${{ steps.set-matrix.outputs.matrix == '{"env_name": []}'}}
+        run: |
+          echo "No Terraform changes detected. Skipping workflow."
+          exit 0
+
   tf-init:
     name: Terraform Init
     needs: check-changes
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
     
@@ -60,6 +70,12 @@ jobs:
           path: tf/${{ matrix.env_name }}/.terraform
           key: terraform-${{ matrix.env_name }}-${{ github.run_id }}
           restore-keys: terraform-
+
+       - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::443370681532:role/github-oidc-role
+          aws-region: ap-northeast-2
       
       - name: Terraform Init
         working-directory: tf/${{ matrix.env_name }}
@@ -109,14 +125,16 @@ jobs:
         uses: actions/checkout@v4
       
       - name: TFSec Scan
-        working-directory: tf/${{ matrix.env_name }}
         uses: aquasecurity/tfsec-action@v1
+        with:
+          working-directory: tf/${{ matrix.env_name }}
       
       - name: Comment on PR
         if: github.event_name == 'pull_request'
         uses: aquasecurity/tfsec-pr-commenter-action@v1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          working-directory: tf/${{ matrix.env_name }}
 
   tf-validate:
     name: Terraform Validate
@@ -159,8 +177,10 @@ jobs:
 
   tf-plan:
     name: Terraform Plan
-    needs: [terraform-fmt, tfsec-scan, terraform-validate]
+    needs: [tf-fmt, tfsec-scan, tf-validate]
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
     
@@ -174,6 +194,12 @@ jobs:
           path: tf/${{ matrix.env_name }}/.terraform
           key: terraform-${{ matrix.env_name }}-${{ github.run_id }}
           restore-keys: terraform-
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::443370681532:role/github-oidc-role
+          aws-region: ap-northeast-2
       
       - name: Terraform Init (Reconfigure)
         working-directory: tf/${{ matrix.env_name }}
