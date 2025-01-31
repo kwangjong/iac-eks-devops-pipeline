@@ -27,7 +27,7 @@ jobs:
           persist-credentials: true
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::443370681532:role/github-oidc-role
           aws-region: ap-northeast-2
