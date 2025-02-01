@@ -15,6 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
+      skip: ${{ steps.set-matrix.outputs.skip }}
 
     steps:
       - name: Check out code
@@ -45,13 +46,13 @@ jobs:
           if [[ "${{ steps.filter.outputs.prd }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["prd"]'); fi
           MATRIX=$(echo $MATRIX | tr '\n' ' ')
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
-      
-      - name: Fail if No Changes
-        if: |
-          ${{ steps.set-matrix.outputs.matrix == '{"env_name": []}'}}
-        run: |
-          echo "No Terraform changes detected. Skipping workflow."
-          exit 0
+
+          if [[ "$MATRIX" == '{"env_name": []}' ]]; then
+            echo "No changes detected. Skipping workflow."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
 
   tf-init:
     name: Terraform Init
@@ -61,6 +62,8 @@ jobs:
       id-token: write
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
+
+    if: needs.check-changes.outputs.skip != 'true'
     
     steps:
       - name: Check out code
@@ -94,6 +97,8 @@ jobs:
       contents: write
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
+
+    if: needs.check-changes.outputs.skip != 'true'
     
     steps:
       - name: Check out code
@@ -134,6 +139,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
+
+    if: needs.check-changes.outputs.skip != 'true'
     
     steps:
       - name: Check out code
@@ -164,6 +171,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
+
+    if: needs.check-changes.outputs.skip != 'true'
     
     steps:
       - name: Check out code
@@ -207,6 +216,8 @@ jobs:
       id-token: write
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
+
+    if: needs.check-changes.outputs.skip != 'true'
     
     steps:
       - name: Check out code
