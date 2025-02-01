@@ -147,13 +147,13 @@ jobs:
           restore-keys: terraform-
       
       - name: TFSec Scan
-        uses: aquasecurity/tfsec-action@v1
+        uses: aquasecurity/tfsec-action@v1.0.3
         with:
           working_directory: tf/${{ matrix.env_name }}
       
       - name: Comment on PR
         if: github.event_name == 'pull_request'
-        uses: aquasecurity/tfsec-pr-commenter-action@v1
+        uses: aquasecurity/tfsec-pr-commenter-action@v1.3.1
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           working_directory: tf/${{ matrix.env_name }}
