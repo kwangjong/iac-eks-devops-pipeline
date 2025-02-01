@@ -73,6 +73,9 @@ jobs:
           key: terraform-${{ matrix.env_name }}-${{ github.run_id }}
           restore-keys: terraform-
 
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -98,6 +101,16 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: true
+
+      - name: Cache Terraform Modules
+        uses: actions/cache@v4
+        with:
+          path: tf/${{ matrix.env_name }}/.terraform
+          key: terraform-${{ matrix.env_name }}-${{ github.run_id }}
+          restore-keys: terraform-
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Fmt
         working-directory: tf/${{ matrix.env_name }}
@@ -125,6 +138,13 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
+
+      - name: Cache Terraform Modules
+        uses: actions/cache@v4
+        with:
+          path: tf/${{ matrix.env_name }}/.terraform
+          key: terraform-${{ matrix.env_name }}-${{ github.run_id }}
+          restore-keys: terraform-
       
       - name: TFSec Scan
         uses: aquasecurity/tfsec-action@v1
@@ -155,8 +175,11 @@ jobs:
           path: tf/${{ matrix.env_name }}/.terraform
           key: terraform-${{ matrix.env_name }}-${{ github.run_id }}
           restore-keys: terraform-
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
       
-      - name: Terraform Init (Reconfigure)
+      - name: Terraform Init
         working-directory: tf/${{ matrix.env_name }}
         run: terraform init -reconfigure
 
@@ -196,13 +219,16 @@ jobs:
           key: terraform-${{ matrix.env_name }}-${{ github.run_id }}
           restore-keys: terraform-
 
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::443370681532:role/github-oidc-role
           aws-region: ap-northeast-2
       
-      - name: Terraform Init (Reconfigure)
+      - name: Terraform Init
         working-directory: tf/${{ matrix.env_name }}
         run: terraform init -reconfigure
 
