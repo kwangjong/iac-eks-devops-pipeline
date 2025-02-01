@@ -43,8 +43,7 @@ jobs:
           if [[ "${{ steps.filter.outputs.dev }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["dev"]'); fi
           if [[ "${{ steps.filter.outputs.stg }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["stg"]'); fi
           if [[ "${{ steps.filter.outputs.prd }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["prd"]'); fi
-          echo $MATRIX
-          echo "matrix=$MATRIX"
+          MATRIX=$(echo $MATRIX | tr '\n' ' ')
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
       
       - name: Fail if No Changes
