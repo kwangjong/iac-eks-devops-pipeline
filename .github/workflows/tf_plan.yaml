@@ -24,7 +24,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v3
         with:
-          base: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}"
+          base: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
           filters: |
             mgmt:
               - 'tf/mgmt/**'
