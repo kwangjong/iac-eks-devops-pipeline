@@ -24,7 +24,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v3
         with:
-          base: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}
+          base: ${{ github.event_name == 'pull_request' && github.base_ref || github.ref_name }}"
           filters: |
             mgmt:
               - 'tf/mgmt/**'
@@ -39,10 +39,10 @@ jobs:
         id: set-matrix
         run: |
           MATRIX='{"env_name": []}'
-          if [[ "${{ steps.filter.outputs.mgmt }}" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["mgmt"]'); fi
-          if [[ "${{ steps.filter.outputs.dev }}" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["dev"]'); fi
-          if [[ "${{ steps.filter.outputs.stg }}" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["stg"]'); fi
-          if [[ "${{ steps.filter.outputs.prd }}" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["prd"]'); fi
+          if [[ "${{ steps.filter.outputs.mgmt }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["mgmt"]'); fi
+          if [[ "${{ steps.filter.outputs.dev }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["dev"]'); fi
+          if [[ "${{ steps.filter.outputs.stg }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["stg"]'); fi
+          if [[ "${{ steps.filter.outputs.prd }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["prd"]'); fi
           echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
       
       - name: Fail if No Changes
