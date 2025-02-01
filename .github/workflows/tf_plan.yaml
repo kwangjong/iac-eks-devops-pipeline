@@ -88,7 +88,7 @@ jobs:
 
   tf-fmt:
     name: Terraform Fmt
-    needs: tf-init
+    needs: [check-changes, tf-init]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -130,7 +130,7 @@ jobs:
   
   tfsec-scan:
     name: TFSec Scan
-    needs: tf-init
+    needs: [check-changes, tf-init]
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
@@ -160,7 +160,7 @@ jobs:
 
   tf-validate:
     name: Terraform Validate
-    needs: tf-init
+    needs: [check-changes, tf-init]
     runs-on: ubuntu-latest
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
@@ -201,7 +201,7 @@ jobs:
 
   tf-plan:
     name: Terraform Plan
-    needs: [tf-fmt, tfsec-scan, tf-validate]
+    needs: [check-changes, tf-fmt, tfsec-scan, tf-validate]
     runs-on: ubuntu-latest
     permissions:
       id-token: write
