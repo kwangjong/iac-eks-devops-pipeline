@@ -87,6 +87,13 @@ jobs:
         working-directory: tf/${{ matrix.env_name }}
         run: terraform plan -input=false | tee >(sed 's/\x1b\[[0-9;]*m//g' > tfplan.txt)
 
+      - name: Read Terraform Plan Output
+        id: tfplan
+        run: |
+          echo 'PLAN<<EOF' >> $GITHUB_ENV
+          head -c 65000 tf/${{ matrix.env_name }}/tfplan.txt >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
+
       - name: Comment on PR with Output
         uses: peter-evans/create-or-update-comment@v4
         with:
@@ -94,6 +101,6 @@ jobs:
           body: |
             ## Terraform Plan Output
             ```
-            $(head -c 65000 tf/${{ matrix.env_name }}/tfplan.txt)
+            ${{ env.PLAN }}
             ```
           edit-mode: replace
