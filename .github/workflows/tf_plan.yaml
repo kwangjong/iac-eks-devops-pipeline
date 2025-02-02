@@ -84,4 +84,15 @@ jobs:
 
       - name: Terraform Plan
         working-directory: tf/${{ matrix.env_name }}
-        run: terraform plan -input=false 
+        run: terraform plan -input=false | tee >(sed 's/\x1b\[[0-9;]*m//g' > tfplan.txt)
+
+      - name: Comment on PR with Output
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            ## Terraform Plan Output
+            ```
+            $(head -c 65000 tf/${{ matrix.env_name }}/tfplan.txt)
+            ```
+          edit-mode: replace
