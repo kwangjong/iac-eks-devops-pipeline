@@ -28,7 +28,21 @@ jobs:
         with:
           role-to-assume: arn:aws:iam::443370681532:role/github-oidc-role
           aws-region: ap-northeast-2
+      
+      - name: Cache Terraform Binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d
+          key: terraform-bin-${{ matrix.env_name }}
+          restore-keys: terraform-
 
+      - name: Cache Terraform Init Files
+        uses: actions/cache@v4
+        with:
+          path: tf/${{ matrix.env_name }}/.terraform
+          key: terraform-init-${{ matrix.env_name }}
+          restore-keys: terraform-
+      
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v3
 
