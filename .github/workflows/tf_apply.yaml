@@ -1,14 +1,12 @@
 name: Terraform Plan
 
 on:
-  pull_request:
+  push:
+    branches:
+      - main
     paths:
       - 'tf/**'
-    types:
-      - opened
-      - synchronize
-      - reopened
-
+      
 jobs:
   check-changes:
     name: Check Changed Paths
@@ -54,8 +52,8 @@ jobs:
             echo "skip=false" >> $GITHUB_OUTPUT
           fi
 
-  tf-plan:
-    name: Terraform Plan
+  tf-apply:
+    name: Terraform Apply
     needs: check-changes
     runs-on: ubuntu-latest
     permissions:
@@ -82,6 +80,6 @@ jobs:
         working-directory: tf/${{ matrix.env_name }}
         run: terraform init
 
-      - name: Terraform Plan
+      - name: Terraform Apply
         working-directory: tf/${{ matrix.env_name }}
-        run: terraform plan -input=false 
+        run: terraform apply -auto-approve

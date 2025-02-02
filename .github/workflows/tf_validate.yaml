@@ -1,0 +1,187 @@
+name: Terraform Validate
+
+on:
+  push:
+    branches-ignores:
+      - main
+    paths:
+      - 'tf/**'
+
+jobs:
+  check-changes:
+    name: Check Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      skip: ${{ steps.set-matrix.outputs.skip }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Paths Filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          base: github.ref_name
+          filters: |
+            mgmt:
+              - 'tf/mgmt/**'
+            dev:
+              - 'tf/dev/**'
+            stg:
+              - 'tf/stg/**'
+            prd:
+              - 'tf/prd/**'
+
+      - name: Generate Matrix
+        id: set-matrix
+        run: |
+          MATRIX='{"env_name": []}'
+          if [[ "${{ steps.filter.outputs.mgmt }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["mgmt"]'); fi
+          if [[ "${{ steps.filter.outputs.dev }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["dev"]'); fi
+          if [[ "${{ steps.filter.outputs.stg }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["stg"]'); fi
+          if [[ "${{ steps.filter.outputs.prd }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["prd"]'); fi
+          MATRIX=$(echo $MATRIX | tr '\n' ' ')
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+          if [[ "$MATRIX" == '{"env_name": []}' ]]; then
+            echo "No changes detected. Skipping workflow."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+  tf-init:
+    name: Terraform Init
+    needs: check-changes
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
+
+    if: needs.check-changes.outputs.skip != 'true'
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Cache Terraform Binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d
+          key: terraform-bin-${{ matrix.env_name }}-${{ github.run_id }}
+          restore-keys: terraform-
+
+      - name: Cache Terraform Init Files
+        uses: actions/cache@v4
+        with:
+          path: tf/${{ matrix.env_name }}/.terraform
+          key: terraform-init-${{ matrix.env_name }}-${{ github.run_id }}
+          restore-keys: terraform-
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+      
+      - name: Terraform Init
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform init
+
+  tf-fmt:
+    name: Terraform Fmt
+    needs: [check-changes, tf-init]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    strategy:
+      matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
+
+    if: needs.check-changes.outputs.skip != 'true'
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Cache Terraform Binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d
+          key: terraform-bin-${{ matrix.env_name }}-${{ github.run_id }}
+          restore-keys: terraform-
+
+      - name: Set up Terraform (if not cached)
+        uses: hashicorp/setup-terraform@v3
+ 
+      - name: Terraform Fmt
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform fmt -recursive
+      
+      - name: Commit and Push Format Changes
+        run: |
+          if [ -n "$(git status --porcelain)" ]; then
+            git config --global user.name "github-actions[bot]"
+            git config --global user.email "github-actions[bot]@users.noreply.github.com"
+            git add .
+            git commit -m "Auto-format: fix Terraform style [ci skip]"
+            git push
+          else
+            echo "No formatting changes to commit."
+          fi
+  
+  tfsec-scan:
+    name: TFSec Scan
+    needs: [check-changes, tf-init]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
+
+    if: needs.check-changes.outputs.skip != 'true'
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: TFSec Scan
+        uses: aquasecurity/tfsec-action@v1.0.3
+        with:
+          working_directory: tf/${{ matrix.env_name }}
+
+  tf-validate:
+    name: Terraform Validate
+    needs: [check-changes, tf-init]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
+
+    if: needs.check-changes.outputs.skip != 'true'
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+      
+      - name: Cache Terraform Binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d
+          key: terraform-bin-${{ matrix.env_name }}-${{ github.run_id }}
+          restore-keys: terraform-
+
+      - name: Cache Terraform Init Files
+        uses: actions/cache@v4
+        with:
+          path: tf/${{ matrix.env_name }}/.terraform
+          key: terraform-init-${{ matrix.env_name }}-${{ github.run_id }}
+          restore-keys: terraform-
+
+      - name: Set up Terraform (if not cached)
+        uses: hashicorp/setup-terraform@v3
+      
+      - name: Terraform Init (if not cached)
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform validate | tee tfvalidate.txt
