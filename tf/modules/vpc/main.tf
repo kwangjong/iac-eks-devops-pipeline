@@ -1,5 +1,4 @@
 #vpc
-
 #tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs
 resource "aws_vpc" "vpc" {
   cidr_block = var.vpc.cidr_block
@@ -91,7 +90,7 @@ resource "aws_route_table_association" "public_assoc" {
           subnet_id       = aws_subnet.public_subnet[subnet_name].id
         }
     }
-  ])
+  ]...)
 
   subnet_id       = each.value.subnet_id
   route_table_id  = each.value.route_table_id
@@ -127,7 +126,7 @@ resource "aws_route_table_association" "private_assoc" {
           subnet_id       = aws_subnet.private_subnet[subnet_name].id
         }
     }
-  ])
+  ]...)
   subnet_id       = each.value.subnet_id
   route_table_id  = each.value.route_table_id
 }

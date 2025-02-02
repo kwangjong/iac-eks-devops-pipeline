@@ -1,0 +1,85 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'tf/**'
+      
+jobs:
+  check-changes:
+    name: Check Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      skip: ${{ steps.set-matrix.outputs.skip }}
+
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Paths Filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          base: ${{ github.ref_name }}
+          filters: |
+            mgmt:
+              - 'tf/mgmt/**'
+            dev:
+              - 'tf/dev/**'
+            stg:
+              - 'tf/stg/**'
+            prd:
+              - 'tf/prd/**'
+
+      - name: Generate Matrix
+        id: set-matrix
+        run: |
+          MATRIX='{"env_name": []}'
+          if [[ "${{ steps.filter.outputs.mgmt }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["mgmt"]'); fi
+          if [[ "${{ steps.filter.outputs.dev }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["dev"]'); fi
+          if [[ "${{ steps.filter.outputs.stg }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["stg"]'); fi
+          if [[ "${{ steps.filter.outputs.prd }}" == "true" ]]; then MATRIX=$(echo $MATRIX | jq '.env_name += ["prd"]'); fi
+          MATRIX=$(echo $MATRIX | tr '\n' ' ')
+          echo "matrix=$MATRIX" >> $GITHUB_OUTPUT
+
+          if [[ "$MATRIX" == '{"env_name": []}' ]]; then
+            echo "No changes detected. Skipping workflow."
+            echo "skip=true" >> $GITHUB_OUTPUT
+          else
+            echo "skip=false" >> $GITHUB_OUTPUT
+          fi
+
+  tf-apply:
+    name: Terraform Apply
+    needs: check-changes
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    strategy:
+      matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
+
+    if: needs.check-changes.outputs.skip != 'true'
+    
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::443370681532:role/github-oidc-role
+          aws-region: ap-northeast-2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+      
+      - name: Terraform Init
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: tf/${{ matrix.env_name }}
+        run: terraform apply -auto-approve
