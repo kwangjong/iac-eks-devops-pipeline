@@ -59,6 +59,7 @@ jobs:
     needs: check-changes
     runs-on: ubuntu-latest
     permissions:
+      pull-requests: write
       id-token: write
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
