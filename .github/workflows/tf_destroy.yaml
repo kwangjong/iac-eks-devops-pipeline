@@ -1,0 +1,41 @@
+name: Terraform Destroy
+
+on:
+  workflow_dispatch:
+    inputs:
+      env_name:
+        description: "Environment to destroy (mgmt, dev, stg, prd)"
+        required: true
+        type: choice
+        options:
+          - mgmt
+          - dev
+          - stg
+          - prd
+
+jobs:
+  tf-destroy:
+    name: Terraform Destroy
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::443370681532:role/github-oidc-role
+          aws-region: ap-northeast-2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        working-directory: tf/${{ inputs.env_name }}
+        run: terraform init
+
+      - name: Terraform Destroy
+        working-directory: tf/${{ inputs.env_name }}
+        run: terraform destroy -auto-approve
