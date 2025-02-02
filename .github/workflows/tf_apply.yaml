@@ -23,7 +23,7 @@ jobs:
         id: filter
         uses: dorny/paths-filter@v3
         with:
-          base: github.base_ref
+          base: ${{ github.ref_name }}
           filters: |
             mgmt:
               - 'tf/mgmt/**'
