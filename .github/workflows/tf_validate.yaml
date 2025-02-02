@@ -69,14 +69,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.terraform.d
-          key: terraform-bin-${{ matrix.env_name }}-${{ github.run_id }}
+          key: terraform-bin-${{ matrix.env_name }}
           restore-keys: terraform-
 
       - name: Cache Terraform Init Files
         uses: actions/cache@v4
         with:
           path: tf/${{ matrix.env_name }}/.terraform
-          key: terraform-init-${{ matrix.env_name }}-${{ github.run_id }}
+          key: terraform-init-${{ matrix.env_name }}
           restore-keys: terraform-
 
       - name: Set up Terraform
@@ -108,7 +108,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.terraform.d
-          key: terraform-bin-${{ matrix.env_name }}-${{ github.run_id }}
+          key: terraform-bin-${{ matrix.env_name }}
           restore-keys: terraform-
 
       - name: Set up Terraform (if not cached)
@@ -165,14 +165,14 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.terraform.d
-          key: terraform-bin-${{ matrix.env_name }}-${{ github.run_id }}
+          key: terraform-bin-${{ matrix.env_name }}
           restore-keys: terraform-
 
       - name: Cache Terraform Init Files
         uses: actions/cache@v4
         with:
           path: tf/${{ matrix.env_name }}/.terraform
-          key: terraform-init-${{ matrix.env_name }}-${{ github.run_id }}
+          key: terraform-init-${{ matrix.env_name }}
           restore-keys: terraform-
 
       - name: Set up Terraform (if not cached)
