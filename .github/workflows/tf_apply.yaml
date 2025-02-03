@@ -6,6 +6,8 @@ on:
       - main
     paths:
       - 'tf/**'
+env:
+  SKIP_APPLY: true
       
 jobs:
   check-changes:
@@ -61,7 +63,7 @@ jobs:
     strategy:
       matrix: ${{ fromJson(needs.check-changes.outputs.matrix) }}
 
-    if: needs.check-changes.outputs.skip != 'true'
+    if: needs.check-changes.outputs.skip != 'true' && env.SKIP_APPLY != true
     
     steps:
       - name: Check out code
